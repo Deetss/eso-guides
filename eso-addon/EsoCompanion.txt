@@ -1,0 +1,8 @@
+## Title: EsoCompanion
+## APIVersion: 101040
+## Version: 1.0.0
+## Author: Antigravity
+## SavedVariables: EsoCompanionVars
+## Description: Captures character stats, equipped gear, slotted skills, and Mundus stones for the ESO Companion Web Dashboard.
+
+EsoCompanion.lua
