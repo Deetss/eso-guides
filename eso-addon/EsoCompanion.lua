@@ -10,9 +10,11 @@ local function OnPlayerActivated()
     sv.class = GetUnitClass("player")
     sv.cp = GetPlayerChampionPointsEarned()
     
-    -- Mount Upgrade Cooldown
-    if GetRidingTrainingCooldown then
-        sv.mountCooldownSeconds = GetRidingTrainingCooldown()
+    -- Daily riding training. GetTimeUntilCanBeTrained() returns ms until the
+    -- next train is allowed, so a non-zero value means it was already done today.
+    if GetTimeUntilCanBeTrained then
+        local timeMs = GetTimeUntilCanBeTrained()
+        sv.mountCooldownSeconds = (timeMs or 0) / 1000
     else
         sv.mountCooldownSeconds = 0
     end
@@ -100,11 +102,14 @@ local function Initialize(eventCode, addonName)
     EsoCompanion.SavedVariables = ZO_SavedVars:NewAccountWide("EsoCompanionVars", 1, nil, {})
     
     EVENT_MANAGER:RegisterForEvent(EsoCompanion.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
+    EVENT_MANAGER:RegisterForEvent(EsoCompanion.name, EVENT_RIDING_SKILL_IMPROVEMENT, OnPlayerActivated)
 end
 
 EVENT_MANAGER:RegisterForEvent(EsoCompanion.name, EVENT_ADD_ON_LOADED, Initialize)
 
--- Slash command to trigger UI reload and update saved variables
+-- Recapture fresh data before reloading so the current values (not the
+-- pre-reload snapshot) are what gets flushed to SavedVariables on disk.
 SLASH_COMMANDS["/sync"] = function()
+    OnPlayerActivated()
     ReloadUI()
 end
