@@ -819,6 +819,35 @@ let checkedTasks = JSON.parse(localStorage.getItem("eso_checked_tasks")) || {};
 let researchedTraits = JSON.parse(localStorage.getItem("eso_researched_traits")) || {};
 let gearMode = localStorage.getItem("eso_gear_mode") || "pve";
 let activeMundus = localStorage.getItem("eso_active_mundus") || "none";
+let currentCp = parseInt(localStorage.getItem("eso_current_cp")) || 160;
+
+const CP_PRIORITIES = {
+  warfare: ["Fighting Finesse", "Precise Strikes", "Backstabber", "Thaumaturge"],
+  fitness: ["Boundless Vitality", "Fortified", "Rejuvenation", "Bloody Renewal"],
+  craft: ["Steed's Blessing", "Rationer", "Gilded Fingers", "Liquid Efficiency"]
+};
+
+function getCpAllocatedPoints(constellationKey, nodeName, maxPointsVal) {
+  const totalConstellationPoints = Math.floor(currentCp / 3);
+  const priorities = CP_PRIORITIES[constellationKey] || [];
+  const maxPoints = parseInt(maxPointsVal);
+  
+  let pointsLeft = totalConstellationPoints;
+  
+  for (const name of priorities) {
+    let nodeMax = 50;
+    if (name === "Precise Strikes") nodeMax = 40;
+    if (name === "Fortified" || name === "Rationer") nodeMax = 30;
+    
+    const allocated = Math.min(pointsLeft, nodeMax);
+    if (name === nodeName) {
+      return allocated;
+    }
+    pointsLeft -= allocated;
+  }
+  
+  return 0;
+}
 
 // ==========================================
 // AUTO-RESET: Dailies & Weeklies
@@ -1661,15 +1690,27 @@ function getGearHtml() {
 // VIEW 4: CHAMPION POINTS
 function getCpHtml() {
   const constellationsHtml = Object.values(CP_CONSTELLATIONS).map(c => {
-    const nodes = c.nodes.map(n => `
-      <div class="cp-node">
-        <div class="cp-node-header">
-          <span>${n.name}</span>
-          <span class="cp-node-points">${n.points} pts</span>
+    const nodes = c.nodes.map(n => {
+      const allocated = getCpAllocatedPoints(c.name.toLowerCase(), n.name, n.points);
+      const isSlotted = n.desc.includes("(Slot)");
+      const maxPts = parseInt(n.points);
+      const percent = Math.round((allocated / maxPts) * 100);
+      
+      return `
+        <div class="cp-node ${allocated === maxPts ? 'completed' : ''} ${allocated > 0 ? 'active' : ''}">
+          <div class="cp-node-header" style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:600; margin-bottom:6px;">
+            <span style="color:${allocated === maxPts ? 'var(--gold-primary)' : 'var(--text-primary)'};">${n.name} ${isSlotted ? '<span style="font-size:0.7rem; color:var(--gold-secondary); opacity:0.85;">[Slot]</span>' : ''}</span>
+            <span class="cp-node-points" style="font-size:0.8rem; color:${allocated > 0 ? '#4ade80' : 'var(--text-muted)'};">${allocated} / ${n.points} pts</span>
+          </div>
+          <p class="cp-node-desc" style="font-size:0.76rem; color:var(--text-secondary); line-height:1.4; margin:0 0 10px 0;">${n.desc}</p>
+          
+          <!-- CP Progress Bar -->
+          <div class="cp-progress-bar-container" style="height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; position:relative;">
+            <div class="cp-progress-fill" style="width:${percent}%; height:100%; background:${allocated === maxPts ? 'var(--gold-primary)' : '#4ade80'}; transition: width 0.3s ease;"></div>
+          </div>
         </div>
-        <p class="cp-node-desc">${n.desc}</p>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     return `
       <div class="cp-constellation ${c.color}">
@@ -1685,7 +1726,22 @@ function getCpHtml() {
   return `
     <div class="view-header">
       <h2>🌟 Champion Point Constellations</h2>
-      <p class="view-desc">Optimal CP allocations for early CP leveling. Key slottable nodes are indicated below.</p>
+      <p class="view-desc">Optimal CP allocations based on your level. Key slottable nodes are indicated below.</p>
+    </div>
+
+    <!-- CP Level Panel Slider -->
+    <div class="cp-level-panel" style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--card-border); border-radius: 8px; padding: 20px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-family:'Cinzel', serif; font-size:0.95rem; color:var(--gold-primary); font-weight:700; letter-spacing:0.5px;">🌟 ADJUST YOUR CHAMPION POINTS</span>
+        <span id="cp-badge-val" style="font-family:'Outfit', sans-serif; font-size:1.1rem; font-weight:700; color:#ffffff; background:rgba(213,184,117,0.15); border:1px solid var(--gold-border); padding:3px 12px; border-radius:4px;">CP ${currentCp}</span>
+      </div>
+      <input type="range" id="cp-range" min="160" max="1600" step="10" value="${currentCp}" style="width:100%; accent-color:var(--gold-primary); cursor:pointer;" />
+      <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+        <span>CP 160 (Gear Cap)</span>
+        <span>CP 600 (Mid Game)</span>
+        <span>CP 1200 (Late Game)</span>
+        <span>CP 1600 (Max Slottables)</span>
+      </div>
     </div>
     
     <div class="cp-view-grid">${constellationsHtml}</div>
@@ -1837,6 +1893,20 @@ function renderView() {
     }
   } else if (activeTab === "cp") {
     container.innerHTML = getCpHtml();
+    
+    const cpRange = container.querySelector("#cp-range");
+    if (cpRange) {
+      cpRange.addEventListener("input", (e) => {
+        currentCp = parseInt(e.target.value);
+        localStorage.setItem("eso_current_cp", currentCp);
+        const badge = container.querySelector("#cp-badge-val");
+        if (badge) badge.innerText = `CP ${currentCp}`;
+      });
+      
+      cpRange.addEventListener("change", () => {
+        renderView();
+      });
+    }
   } else if (activeTab === "research") {
     container.innerHTML = getResearchHtml();
     
