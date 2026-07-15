@@ -149,7 +149,11 @@ class CompanionApp:
         
         # Local Sync Address note
         api_note = tk.Label(self.root, text="API running on http://localhost:42069/profile", font=("Outfit", 8), fg="#4b5563", bg="#101216")
-        api_note.pack(pady=5)
+        api_note.pack(pady=2)
+        
+        # Quick Tip
+        tip_note = tk.Label(self.root, text="💡 Tip: Type /sync in-game in the chat window to sync instantly!", font=("Outfit", 8, "italic"), fg="#d5b875", bg="#101216")
+        tip_note.pack(pady=4)
 
     def browse_folder(self):
         selected = filedialog.askdirectory(initialdir=self.eso_path.get())

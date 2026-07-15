@@ -99,3 +99,8 @@ local function Initialize(eventCode, addonName)
 end
 
 EVENT_MANAGER:RegisterForEvent(EsoCompanion.name, EVENT_ADD_ON_LOADED, Initialize)
+
+-- Slash command to trigger UI reload and update saved variables
+SLASH_COMMANDS["/sync"] = function()
+    ReloadUI()
+end
