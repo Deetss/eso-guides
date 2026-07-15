@@ -9,6 +9,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+ADDON_FOLDER_NAME = "EsoCompanion"
+
 class CORSRequestHandler(BaseHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
