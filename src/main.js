@@ -709,9 +709,75 @@ function getActiveBuffs() {
     active.push({ ...BUFF_DEFINITIONS.minor_vulnerability, source: "Rune of the Colorless Pool" });
   }
 
+  // 4. Mundus Stone Triggers (with Divines math)
+  if (activeMundus === "shadow") {
+    const divinesCount = Object.values(currentEquip).filter(item => item && item.trait === "Divines").length;
+    const shadowBonus = (9 * (1 + divinesCount * 0.091)).toFixed(1);
+    active.push({ name: "The Shadow Mundus", type: "buff", desc: `Increases Critical Damage by ${shadowBonus}% (+${divinesCount} Divines pieces).`, icon: "🌙", source: "Mundus Stone" });
+  } else if (activeMundus === "thief") {
+    const divinesCount = Object.values(currentEquip).filter(item => item && item.trait === "Divines").length;
+    const thiefBonus = ((1333 * (1 + divinesCount * 0.091)) / 219.6).toFixed(1);
+    active.push({ name: "The Thief Mundus", type: "buff", desc: `Increases Critical Chance by ${thiefBonus}% (+${divinesCount} Divines pieces).`, icon: "⭐", source: "Mundus Stone" });
+  } else if (activeMundus === "lover") {
+    const divinesCount = Object.values(currentEquip).filter(item => item && item.trait === "Divines").length;
+    const loverBonus = Math.round(2744 * (1 + divinesCount * 0.091));
+    active.push({ name: "The Lover Mundus", type: "buff", desc: `Increases Physical and Spell Penetration by ${loverBonus} (+${divinesCount} Divines pieces).`, icon: "❤️", source: "Mundus Stone" });
+  } else if (activeMundus === "warrior") {
+    const divinesCount = Object.values(currentEquip).filter(item => item && item.trait === "Divines").length;
+    const warriorBonus = Math.round(238 * (1 + divinesCount * 0.091));
+    active.push({ name: "The Warrior Mundus", type: "buff", desc: `Increases Weapon/Spell Damage by ${warriorBonus} (+${divinesCount} Divines pieces).`, icon: "⚔️", source: "Mundus Stone" });
+  }
+
   return active;
 }
 
+function getCalculatedStats() {
+  const baseStats = BUILD_DATA[activeClass].stats[gearMode];
+  const currentEquip = CHARACTER_EQUIPMENT[gearMode] || {};
+  
+  // Parse base values
+  let weaponDamage = parseInt(baseStats.weaponDamage.replace(/,/g, ''));
+  let criticalChance = parseFloat(baseStats.criticalChance.replace(/%/g, ''));
+  let penetration = parseInt(baseStats.penetration.replace(/,/g, ''));
+  
+  // Calculate Divines count
+  const divinesCount = Object.values(currentEquip).filter(item => item && item.trait === "Divines").length;
+  const divinesMultiplier = 1 + (divinesCount * 0.091);
+  
+  let damageBonus = 0;
+  let critBonus = 0;
+  let penBonus = 0;
+  let shadowCritDamageBonus = 0;
+
+  if (activeMundus === "thief") {
+    const rating = 1333 * divinesMultiplier;
+    critBonus = rating / 219.6; // ~219.6 rating = 1% crit chance
+  } else if (activeMundus === "shadow") {
+    shadowCritDamageBonus = 9 * divinesMultiplier;
+  } else if (activeMundus === "lover") {
+    penBonus = Math.round(2744 * divinesMultiplier);
+  } else if (activeMundus === "warrior") {
+    damageBonus = Math.round(238 * divinesMultiplier);
+  }
+
+  return {
+    stamina: baseStats.stamina,
+    health: baseStats.health,
+    magicka: baseStats.magicka,
+    critResist: baseStats.critResist,
+    // Calculated values
+    weaponDamage: Math.round(weaponDamage + damageBonus).toLocaleString(),
+    criticalChance: (criticalChance + critBonus).toFixed(1) + "%",
+    penetration: Math.round(penetration + penBonus).toLocaleString(),
+    // Raw bonuses for UI feedback
+    damageBonus,
+    critBonus,
+    penBonus,
+    shadowCritDamageBonus,
+    divinesCount,
+    divinesPercent: (divinesCount * 9.1).toFixed(1) + "%"
+  };
+}
 
 // ==========================================
 // APP STATE & STORAGE
@@ -721,6 +787,7 @@ let activeTab = localStorage.getItem("eso_active_tab") || "routine";
 let checkedTasks = JSON.parse(localStorage.getItem("eso_checked_tasks")) || {};
 let researchedTraits = JSON.parse(localStorage.getItem("eso_researched_traits")) || {};
 let gearMode = localStorage.getItem("eso_gear_mode") || "pve";
+let activeMundus = localStorage.getItem("eso_active_mundus") || "none";
 
 // ==========================================
 // AUTO-RESET: Dailies & Weeklies
@@ -1296,7 +1363,7 @@ function renderGearSlot(slotId, slotLabel, equipment) {
 function getGearHtml() {
   const currentSets = GEAR_SETS[gearMode] || GEAR_SETS.pve;
   const currentEquip = CHARACTER_EQUIPMENT[gearMode] || CHARACTER_EQUIPMENT.pve;
-  const stats = CHARACTER_STATS[gearMode] || CHARACTER_STATS.pve;
+  const stats = getCalculatedStats();
 
   const activeBuffs = getActiveBuffs();
   const buffsHtml = activeBuffs.map(b => `
@@ -1380,6 +1447,18 @@ function getGearHtml() {
         
         <!-- Stats Center -->
         <div class="sheet-center">
+          <!-- Mundus selector -->
+          <div class="mundus-selector-container" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.15); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px 14px;">
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif;">🔮 MUNDUS STONE</span>
+            <select id="mundus-select" class="class-select-dropdown" style="padding: 2px 6px; font-size: 0.76rem;">
+              <option value="none" ${activeMundus === 'none' ? 'selected' : ''}>None</option>
+              <option value="thief" ${activeMundus === 'thief' ? 'selected' : ''}>The Thief (+Crit Chance)</option>
+              <option value="shadow" ${activeMundus === 'shadow' ? 'selected' : ''}>The Shadow (+Crit Damage)</option>
+              <option value="lover" ${activeMundus === 'lover' ? 'selected' : ''}>The Lover (+Penetration)</option>
+              <option value="warrior" ${activeMundus === 'warrior' ? 'selected' : ''}>The Warrior (+Weapon Damage)</option>
+            </select>
+          </div>
+
           <div class="stats-box">
             <div class="stats-header">STAT TOTALS</div>
             
@@ -1401,15 +1480,15 @@ function getGearHtml() {
             <div class="stat-details-list">
               <div class="stat-detail-item">
                 <span>Weapon Damage</span>
-                <span>${stats.weaponDamage}</span>
+                <span>${stats.damageBonus > 0 ? `<span style="color: #4ade80;" title="+${stats.damageBonus} from Warrior Mundus (boosted by ${stats.divinesPercent} Divines)">${stats.weaponDamage}</span>` : stats.weaponDamage}</span>
               </div>
               <div class="stat-detail-item">
                 <span>Critical Chance</span>
-                <span>${stats.criticalChance}</span>
+                <span>${stats.critBonus > 0 ? `<span style="color: #4ade80;" title="+${stats.critBonus.toFixed(1)}% from Thief Mundus (boosted by ${stats.divinesPercent} Divines)">${stats.criticalChance}</span>` : stats.criticalChance}</span>
               </div>
               <div class="stat-detail-item">
                 <span>Armor Penetration</span>
-                <span>${stats.penetration}</span>
+                <span>${stats.penBonus > 0 ? `<span style="color: #4ade80;" title="+${stats.penBonus} from Lover Mundus (boosted by ${stats.divinesPercent} Divines)">${stats.penetration}</span>` : stats.penetration}</span>
               </div>
               <div class="stat-detail-item">
                 <span>Critical Resist</span>
@@ -1561,10 +1640,19 @@ function renderView() {
           // Slot the set items
           slotSet(setName);
         }
-        
         renderView();
       });
     });
+
+    // Add listener for Mundus selector
+    const mundusSelect = container.querySelector("#mundus-select");
+    if (mundusSelect) {
+      mundusSelect.addEventListener("change", (e) => {
+        activeMundus = e.target.value;
+        localStorage.setItem("eso_active_mundus", activeMundus);
+        renderView();
+      });
+    }
   } else if (activeTab === "cp") {
     container.innerHTML = getCpHtml();
   } else if (activeTab === "research") {
