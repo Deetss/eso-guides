@@ -1102,6 +1102,66 @@ h2 {
   align-self: center;
 }
 
+.buffs-box {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: center;
+}
+
+.buffs-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.buff-badge {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(213, 184, 117, 0.12);
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  cursor: help;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.buff-badge:hover {
+  background-color: rgba(213, 184, 117, 0.04);
+  border-color: var(--gold-primary);
+}
+
+.buff-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.buff-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-buffs-hint {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  line-height: 1.5;
+  padding: 12px 6px;
+}
+
 .stats-header {
   font-family: 'Cinzel', serif;
   font-size: 0.95rem;

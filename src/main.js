@@ -624,6 +624,96 @@ const RESEARCH_TRAITS = [
 ];
 
 // ==========================================
+// ACTIVE BUFFS & SYNERGIES SYSTEM
+// ==========================================
+
+const BUFF_DEFINITIONS = {
+  minor_force: { name: "Minor Force", type: "buff", desc: "Increases Critical Damage by 10%.", icon: "⚡" },
+  minor_slayer: { name: "Minor Slayer", type: "buff", desc: "Increases damage dealt in Dungeons and Trials by 5%.", icon: "⚔️" },
+  minor_berserk: { name: "Minor Berserk", type: "buff", desc: "Increases damage dealt by 5%.", icon: "🔥" },
+  major_savagery: { name: "Major Savagery & Prophecy", type: "buff", desc: "Increases Weapon and Spell Critical rating by 2,629 (+12% Crit Chance).", icon: "👁️" },
+  major_resolve: { name: "Major Resolve", type: "buff", desc: "Increases Physical and Spell Resistance by 5,940.", icon: "🛡️" },
+  minor_brittle: { name: "Minor Brittle", type: "debuff", desc: "Increases Critical Damage taken by target by 10%.", icon: "❄️" },
+  minor_vulnerability: { name: "Minor Vulnerability", type: "debuff", desc: "Increases damage taken by target by 5%.", icon: "🎯" },
+  minor_maim: { name: "Minor Maim", type: "debuff", desc: "Reduces target's damage dealt by 5%.", icon: "🥀" },
+  major_courage: { name: "Major Courage", type: "buff", desc: "Increases Weapon and Spell Damage by 430.", icon: "👑" },
+  major_berserk: { name: "Major Berserk", type: "buff", desc: "Increases damage dealt by 10%.", icon: "🩸" },
+  major_protection: { name: "Major Protection", type: "buff", desc: "Reduces damage taken by 10%.", icon: "💫" }
+};
+
+function getActiveBuffs() {
+  const active = [];
+  const currentEquip = CHARACTER_EQUIPMENT[gearMode] || {};
+  
+  // Helper to check slotted set
+  const hasSet = (setName) => Object.values(currentEquip).some(item => item && item.set === setName);
+  
+  // Helper to check slotted skill
+  const hasSkill = (skillName) => {
+    return Object.values(SKILL_BARS).some(bar => 
+      bar.skills.some(skill => skill.name === skillName)
+    );
+  };
+
+  // 1. Oakensoul Ring Check (Gives 10+ buffs)
+  if (hasSet("Oakensoul Ring")) {
+    active.push({ ...BUFF_DEFINITIONS.major_courage, source: "Oakensoul Ring" });
+    active.push({ ...BUFF_DEFINITIONS.major_resolve, source: "Oakensoul Ring" });
+    active.push({ ...BUFF_DEFINITIONS.major_protection, source: "Oakensoul Ring" });
+    active.push({ ...BUFF_DEFINITIONS.minor_berserk, source: "Oakensoul Ring" });
+    active.push({ ...BUFF_DEFINITIONS.minor_force, source: "Oakensoul Ring" });
+    active.push({ name: "Major Prophecy & Savagery", type: "buff", desc: "Increases Critical rating by 2,629.", icon: "👁️", source: "Oakensoul Ring" });
+    active.push({ name: "Minor Intellect & Endurance", type: "buff", desc: "Increases Magicka and Stamina Recovery by 15%.", icon: "🌀", source: "Oakensoul Ring" });
+  } else {
+    // Standard checks if NOT using Oakensoul
+    
+    // Velothi Ur-Mage's Amulet
+    if (hasSet("Velothi Ur-Mage's Amulet")) {
+      active.push({ ...BUFF_DEFINITIONS.minor_force, source: "Velothi Ur-Mage's Amulet" });
+      active.push({ ...BUFF_DEFINITIONS.minor_slayer, source: "Velothi Ur-Mage's Amulet" });
+    }
+    
+    // Sea-Serpent's Coil
+    if (hasSet("Sea-Serpent's Coil")) {
+      active.push({ ...BUFF_DEFINITIONS.major_courage, source: "Sea-Serpent's Coil (on damage)" });
+      active.push({ ...BUFF_DEFINITIONS.major_berserk, source: "Sea-Serpent's Coil (on damage)" });
+    }
+  }
+
+  // 2. Set Bonuses Slayer Checks
+  if (hasSet("Arms of Relequen") && !hasSet("Oakensoul Ring")) {
+    // Velothi amulet already pushes minor_slayer, so check duplication
+    if (!active.some(b => b.name === "Minor Slayer")) {
+      active.push({ ...BUFF_DEFINITIONS.minor_slayer, source: "Arms of Relequen" });
+    }
+  }
+
+  // 3. Skill Triggers
+  if (hasSkill("Barbed Trap") && !active.some(b => b.name === "Minor Force")) {
+    active.push({ ...BUFF_DEFINITIONS.minor_force, source: "Barbed Trap" });
+  }
+  if (hasSkill("Camouflaged Hunter")) {
+    active.push({ ...BUFF_DEFINITIONS.major_savagery, source: "Camouflaged Hunter" });
+    if (!active.some(b => b.name === "Minor Berserk")) {
+      active.push({ ...BUFF_DEFINITIONS.minor_berserk, source: "Camouflaged Hunter (Flanking)" });
+    }
+  }
+  if (hasSkill("Dark Shade")) {
+    active.push({ ...BUFF_DEFINITIONS.minor_maim, source: "Dark Shade" });
+  }
+  if (hasSkill("Cruxweaver Armor") && !active.some(b => b.name === "Major Resolve")) {
+    active.push({ ...BUFF_DEFINITIONS.major_resolve, source: "Cruxweaver Armor" });
+  }
+  if (hasSkill("Rune of the Colorless Pool")) {
+    active.push({ ...BUFF_DEFINITIONS.minor_brittle, source: "Rune of the Colorless Pool" });
+    active.push({ ...BUFF_DEFINITIONS.minor_vulnerability, source: "Rune of the Colorless Pool" });
+  }
+
+  return active;
+}
+
+
+// ==========================================
 // APP STATE & STORAGE
 // ==========================================
 
@@ -1207,6 +1297,23 @@ function getGearHtml() {
   const currentSets = GEAR_SETS[gearMode] || GEAR_SETS.pve;
   const currentEquip = CHARACTER_EQUIPMENT[gearMode] || CHARACTER_EQUIPMENT.pve;
   const stats = CHARACTER_STATS[gearMode] || CHARACTER_STATS.pve;
+
+  const activeBuffs = getActiveBuffs();
+  const buffsHtml = activeBuffs.map(b => `
+    <div class="buff-badge" data-tooltip-title="${b.name}" data-tooltip-line="Source: ${b.source}" data-tooltip-desc="${b.desc}">
+      <span class="buff-icon">${b.icon}</span>
+      <span class="buff-name">${b.name}</span>
+    </div>
+  `).join('');
+
+  const buffsBoxHtml = `
+    <div class="buffs-box" style="margin-top: 16px;">
+      <div class="stats-header">ACTIVE BUFFS &amp; SYNERGIES</div>
+      <div class="buffs-list-grid">
+        ${buffsHtml || '<div class="no-buffs-hint">No active combat buffs. Slot gear sets or check skill triggers to activate multipliers.</div>'}
+      </div>
+    </div>
+  `;
   
   const starterHtml = currentSets.starter.map(set => {
     const isSelected = selectedSetName === set.name;
@@ -1310,6 +1417,7 @@ function getGearHtml() {
               </div>
             </div>
           </div>
+          ${buffsBoxHtml}
         </div>
         
         <!-- Right Column: Jewelry & Weapons -->
