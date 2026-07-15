@@ -1986,6 +1986,11 @@ async function loadLiveProfile() {
         }
       });
     }
+    // Auto-apply checkedTasks
+    if (data.checkedTasks) {
+      checkedTasks = data.checkedTasks;
+      localStorage.setItem("eso_checked_tasks", JSON.stringify(checkedTasks));
+    }
     
     renderView();
   }
