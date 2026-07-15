@@ -264,6 +264,10 @@ class CompanionApp:
         if not data:
             return None
             
+        # Auto-check Mount Upgrade task if cooldown is active in-game
+        if data.get("mountCooldownSeconds", 0) > 0:
+            self.task_vars["mount"].set(True)
+            
         # Merge currently checked tasks in GUI
         data["checkedTasks"] = {task_id: var.get() for task_id, var in self.task_vars.items()}
         return data

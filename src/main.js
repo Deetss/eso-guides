@@ -1992,6 +1992,12 @@ async function loadLiveProfile() {
       localStorage.setItem("eso_checked_tasks", JSON.stringify(checkedTasks));
     }
     
+    // Auto-check Mount Upgrade task if cooldown is active in-game
+    if (typeof data.mountCooldownSeconds === 'number' && data.mountCooldownSeconds > 0) {
+      checkedTasks.mount = true;
+      localStorage.setItem("eso_checked_tasks", JSON.stringify(checkedTasks));
+    }
+    
     renderView();
   }
 }

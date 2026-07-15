@@ -10,8 +10,12 @@ local function OnPlayerActivated()
     sv.class = GetUnitClass("player")
     sv.cp = GetPlayerChampionPointsEarned()
     
-    -- Mount Upgrade Cooldown (Client fallback)
-    sv.mountCooldownSeconds = 0
+    -- Mount Upgrade Cooldown
+    if GetSecondsUntilRidingTrainingAvailable then
+        sv.mountCooldownSeconds = GetSecondsUntilRidingTrainingAvailable()
+    else
+        sv.mountCooldownSeconds = 0
+    end
     
     -- Mundus Stone check
     sv.activeMundus = "none"
