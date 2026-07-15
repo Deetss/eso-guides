@@ -11,8 +11,8 @@ local function OnPlayerActivated()
     sv.cp = GetPlayerChampionPointsEarned()
     
     -- Mount Upgrade Cooldown
-    if GetSecondsUntilRidingTrainingAvailable then
-        sv.mountCooldownSeconds = GetSecondsUntilRidingTrainingAvailable()
+    if GetRidingTrainingCooldown then
+        sv.mountCooldownSeconds = GetRidingTrainingCooldown()
     else
         sv.mountCooldownSeconds = 0
     end
