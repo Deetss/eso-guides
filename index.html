@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.ico" onerror="this.style.display='none'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Best Practices -->
+    <title>ESO Progression Guide & Web Companion (Update 50)</title>
+    <meta name="description" content="An interactive companion dashboard and progression planner for Elder Scrolls Online players. Track daily routines, mount stats, craft research priorities, leveling builds, and CP allocations." />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="container header-container">
+        <div class="brand-section">
+          <span class="brand-logo">📜</span>
+          <div class="brand-title">
+            <div class="brand-h1-row" style="display: flex; align-items: center; gap: 12px;">
+              <h1>ESO Companion</h1>
+              <select id="class-select" class="class-select-dropdown">
+                <option value="nightblade">Stamina Nightblade</option>
+                <option value="arcanist">Stamina Arcanist</option>
+              </select>
+            </div>
+            <p>Raid & Leveling Dashboard</p>
+          </div>
+        </div>
+        
+        <nav class="nav-menu">
+          <button class="nav-item active" data-tab="routine">
+            <span>📅</span> Routine
+          </button>
+          <button class="nav-item" data-tab="skills">
+            <span>⚔️</span> Skill Bars
+          </button>
+          <button class="nav-item" data-tab="gear">
+            <span>🛡️</span> Gearing
+          </button>
+          <button class="nav-item" data-tab="cp">
+            <span>🌟</span> Champion Points
+          </button>
+          <button class="nav-item" data-tab="research">
+            <span>🔨</span> Crafting
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="container" id="view-container">
+        <!-- Content will be injected dynamically here -->
+      </div>
+    </main>
+
+    <!-- Global Tooltip Container -->
+    <div id="global-tooltip" class="tooltip-container">
+      <div class="tooltip-title" id="tooltip-title">Tooltip Title</div>
+      <div class="tooltip-line" id="tooltip-line">LINE TYPE</div>
+      <div class="tooltip-desc" id="tooltip-desc">Tooltip description text goes here.</div>
+    </div>
+
+    <footer class="app-footer">
+      <div class="container">
+        <div class="footer-citations">
+          <h5>📚 Source Citations & References</h5>
+          <ul>
+            <li><strong>Gear & CP Meta (Update 50)</strong>: Adapted from the PvE DPS mathematics published by <a href="https://www.skinnycheeks.gg/nightblade" target="_blank" rel="noreferrer">Skinny Cheeks</a>.</li>
+            <li><strong>Progression Routines</strong>: Modeled after character progression plans by <a href="https://alcasthq.com/eso-stamina-nightblade-build-for-pve/" target="_blank" rel="noreferrer">AlcastHQ</a>.</li>
+            <li><strong>Skills Database</strong>: Sourced from <a href="https://eso-hub.com/" target="_blank" rel="noreferrer">ESO-Hub</a>.</li>
+            <li><strong>Asset Media</strong>: Skills icons provided by the <a href="https://en.uesp.net/wiki/Online:Skills" target="_blank" rel="noreferrer">UESP Wiki</a>.</li>
+          </ul>
+        </div>
+        <p class="footer-copyright">&copy; 2026 ESO Progression Companion.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
