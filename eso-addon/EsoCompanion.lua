@@ -47,7 +47,7 @@ local function OnPlayerActivated()
         [EQUIP_SLOT_HEAD] = "head",
         [EQUIP_SLOT_SHOULDERS] = "shoulder",
         [EQUIP_SLOT_CHEST] = "chest",
-        [EQUIP_SLOT_HANDS] = "hands",
+        [EQUIP_SLOT_HAND] = "hands",
         [EQUIP_SLOT_WAIST] = "waist",
         [EQUIP_SLOT_LEGS] = "legs",
         [EQUIP_SLOT_FEET] = "feet",
