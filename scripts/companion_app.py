@@ -58,9 +58,12 @@ class CompanionApp:
         self.style.theme_use('clam')
         
         # Addon source (package path)
-        self.addon_src = os.path.join(os.path.dirname(__file__), '../eso-addon')
-        if not os.path.exists(self.addon_src):
-            self.addon_src = "eso-addon" # fallback
+        if hasattr(sys, '_MEIPASS'):
+            self.addon_src = os.path.join(sys._MEIPASS, 'eso-addon')
+        else:
+            self.addon_src = os.path.join(os.path.dirname(__file__), '../eso-addon')
+            if not os.path.exists(self.addon_src):
+                self.addon_src = "eso-addon" # fallback
             
         self.eso_path = tk.StringVar()
         self.status_msg = tk.StringVar(value="Status: Idle")
