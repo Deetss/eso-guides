@@ -10,9 +10,8 @@ local function OnPlayerActivated()
     sv.class = GetUnitClass("player")
     sv.cp = GetPlayerChampionPoints()
     
-    -- Mount Upgrade Cooldown
-    local _, _, _, timeUntilNextFeedMS = GetRidingStats()
-    sv.mountCooldownSeconds = timeUntilNextFeedMS and (timeUntilNextFeedMS / 1000) or 0
+    -- Mount Upgrade Cooldown (Client fallback)
+    sv.mountCooldownSeconds = 0
     
     -- Mundus Stone check
     sv.activeMundus = "none"
