@@ -13,6 +13,8 @@ dist-ssr
 *.local
 config.json
 public/live_profile.json
+build/
+*.spec
 
 # Editor directories and files
 .vscode/*
