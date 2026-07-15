@@ -1,0 +1,78 @@
+name: Build and Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger when pushing a version tag (e.g., v1.0.0)
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Executable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Compile Standalone Executable
+        run: |
+          pyinstaller --onefile --noconsole --add-data "eso-addon;eso-addon" scripts/companion_app.py
+
+      - name: Rename Executable
+        run: |
+          mv dist/companion_app.exe dist/EsoCompanionSync.exe
+
+      - name: Upload Windows Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EsoCompanionSync-win
+          path: dist/EsoCompanionSync.exe
+
+  publish-release:
+    name: Create GitHub Release
+    needs: build-windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: EsoCompanionSync-win
+          path: ./dist
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/EsoCompanionSync.exe
+          name: Release ${{ github.ref_name }}
+          body: |
+            ### 📜 ESO Companion Sync Release
+            
+            This release contains the standalone Windows Sync Client for the ESO Companion Dashboard.
+            
+            #### 📦 Download:
+            * **[EsoCompanionSync.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/EsoCompanionSync.exe)** (Windows)
+            
+            #### ⚙️ Quick Setup:
+            1. Download `EsoCompanionSync.exe` and place it anywhere on your PC.
+            2. Run the application, click **Install / Update Addon** to copy files automatically.
+            3. Turn on the addon in-game, log in, and reload UI or zone change.
+            4. The hosted dashboard will sync in real-time while the sync client is active!
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
