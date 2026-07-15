@@ -8,7 +8,7 @@ local function OnPlayerActivated()
     
     sv.characterName = GetUnitName("player")
     sv.class = GetUnitClass("player")
-    sv.cp = GetPlayerChampionPoints()
+    sv.cp = GetPlayerChampionPointsEarned()
     
     -- Mount Upgrade Cooldown (Client fallback)
     sv.mountCooldownSeconds = 0
