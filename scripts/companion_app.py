@@ -146,7 +146,7 @@ class CompanionApp:
         self.status_box.pack(fill="x", padx=30, pady=10)
         
         # Local Sync Address note
-        api_note = tk.Label(self.root, text="API running on http://localhost:8000/profile", font=("Outfit", 8), fg="#4b5563", bg="#101216")
+        api_note = tk.Label(self.root, text="API running on http://localhost:42069/profile", font=("Outfit", 8), fg="#4b5563", bg="#101216")
         api_note.pack(pady=5)
 
     def browse_folder(self):
@@ -179,7 +179,7 @@ class CompanionApp:
 
     def start_server(self):
         def run_server():
-            server_address = ('', 8000)
+            server_address = ('', 42069)
             self.httpd = HTTPServer(server_address, CORSRequestHandler)
             self.httpd.serve_forever()
 

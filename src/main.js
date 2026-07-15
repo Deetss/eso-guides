@@ -1935,10 +1935,10 @@ async function loadLiveProfile() {
     }
   } catch (e) {}
 
-  // 2. If no relative file, try fetching from the Local Companion GUI App (localhost:8000)
+  // 2. If no relative file, try fetching from the Local Companion GUI App (localhost:42069)
   if (!data) {
     try {
-      const response = await fetch('http://localhost:8000/profile');
+      const response = await fetch('http://localhost:42069/profile');
       if (response.ok) {
         data = await response.json();
       }
