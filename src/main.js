@@ -1925,54 +1925,69 @@ function renderView() {
 // ==========================================
 
 async function loadLiveProfile() {
+  let data = null;
+  
+  // 1. Try fetching local relative file (dev/static mode)
   try {
     const response = await fetch('./live_profile.json');
     if (response.ok) {
-      const data = await response.json();
-      console.log("Loaded local companion profile:", data);
-      
-      // Auto-apply CP
-      if (data.cp) {
-        currentCp = data.cp;
-        localStorage.setItem("eso_current_cp", currentCp);
-      }
-      
-      // Auto-apply Mundus
-      if (data.activeMundus) {
-        activeMundus = data.activeMundus;
-        localStorage.setItem("eso_active_mundus", activeMundus);
-      }
-      
-      // Auto-apply class
-      if (data.class) {
-        let matchedClass = "nightblade";
-        if (data.class.toLowerCase().includes("arcanist")) {
-          matchedClass = "arcanist";
-        }
-        if (matchedClass !== activeClass) {
-          switchClass(matchedClass);
-        }
-      }
-      
-      // Auto-apply equipment
-      if (data.equipment) {
-        const currentEquip = CHARACTER_EQUIPMENT[gearMode] || CHARACTER_EQUIPMENT.pve;
-        Object.keys(data.equipment).forEach(slot => {
-          if (currentEquip[slot]) {
-            if (data.equipment[slot].setName && data.equipment[slot].setName !== "None") {
-              currentEquip[slot].set = data.equipment[slot].setName;
-            }
-            if (data.equipment[slot].trait && data.equipment[slot].trait !== "None") {
-              currentEquip[slot].trait = data.equipment[slot].trait;
-            }
-          }
-        });
-      }
-      
-      renderView();
+      data = await response.json();
     }
-  } catch (e) {
-    // Silent fail if no profile
+  } catch (e) {}
+
+  // 2. If no relative file, try fetching from the Local Companion GUI App (localhost:8000)
+  if (!data) {
+    try {
+      const response = await fetch('http://localhost:8000/profile');
+      if (response.ok) {
+        data = await response.json();
+      }
+    } catch (e) {}
+  }
+
+  // 3. Apply profile data if loaded
+  if (data && !data.error) {
+    console.log("Loaded companion profile:", data);
+    
+    // Auto-apply CP
+    if (data.cp) {
+      currentCp = data.cp;
+      localStorage.setItem("eso_current_cp", currentCp);
+    }
+    
+    // Auto-apply Mundus
+    if (data.activeMundus) {
+      activeMundus = data.activeMundus;
+      localStorage.setItem("eso_active_mundus", activeMundus);
+    }
+    
+    // Auto-apply class
+    if (data.class) {
+      let matchedClass = "nightblade";
+      if (data.class.toLowerCase().includes("arcanist")) {
+        matchedClass = "arcanist";
+      }
+      if (matchedClass !== activeClass) {
+        switchClass(matchedClass);
+      }
+    }
+    
+    // Auto-apply equipment
+    if (data.equipment) {
+      const currentEquip = CHARACTER_EQUIPMENT[gearMode] || CHARACTER_EQUIPMENT.pve;
+      Object.keys(data.equipment).forEach(slot => {
+        if (currentEquip[slot]) {
+          if (data.equipment[slot].setName && data.equipment[slot].setName !== "None") {
+            currentEquip[slot].set = data.equipment[slot].setName;
+          }
+          if (data.equipment[slot].trait && data.equipment[slot].trait !== "None") {
+            currentEquip[slot].trait = data.equipment[slot].trait;
+          }
+        }
+      });
+    }
+    
+    renderView();
   }
 }
 
