@@ -779,6 +779,37 @@ function getCalculatedStats() {
   };
 }
 
+const ROTATION_SEQUENCES = {
+  nightblade: [
+    { name: "Leeching Strikes", bar: "back", key: "5", desc: "Pre-buff on back bar to guarantee Stamina sustain from auto-attacks." },
+    { name: "Relentless Focus", bar: "back", key: "4", desc: "Pre-buff to start building light attack stacks for the Spectral Bow burst." },
+    { name: "Endless Hail", bar: "back", key: "1", desc: "Cast arrow rain AoE DoT to trigger back-bar weapon glyphs." },
+    { name: "Poison Injection", bar: "back", key: "2", desc: "Apply single-target poison execute DoT to the boss." },
+    { name: "Twisting Path", bar: "back", key: "3", desc: "Deploy shadow path DoT for Major Expedition speed and AoE magic damage." },
+    { name: "Weapon Swap", bar: "front", key: "Swap", desc: "Switch to Front Bar (Dual Daggers) to begin spammable weave." },
+    { name: "Surprise Attack", bar: "front", key: "1", desc: "Main spammable. Cast from behind target for guaranteed Critical Strikes." },
+    { name: "Rapid Strikes", bar: "front", key: "3", desc: "Multi-hit channel spammable to trigger front-bar enchantments." },
+    { name: "Relentless Focus", bar: "front", key: "4", desc: "Fire the Spectral Bow proc once you hit 5 light attack stacks." },
+    { name: "Incapacitating Strike", bar: "front", key: "Ult", desc: "Fire ultimate to stun boss and amplify all damage dealt by 20% for 6s." }
+  ],
+  arcanist: [
+    { name: "Cruxweaver Armor", bar: "back", key: "3", desc: "Pre-buff Major Resolve (+armor) and generate Crux when taking damage." },
+    { name: "Inspired Scholarship", bar: "back", key: "5", desc: "Pre-buff to generate Crux automatically and add class damage pulses." },
+    { name: "Endless Hail", bar: "back", key: "1", desc: "Deploy arrow rain AoE DoT to keep back-bar enchantment active." },
+    { name: "Rune of Displacement", bar: "back", key: "2", desc: "Pull all nearby enemies into a tight pack, priming them for the beam." },
+    { name: "Weapon Swap", bar: "front", key: "Swap", desc: "Switch to Front Bar (Daggers) to activate building multipliers." },
+    { name: "Cephaliarch's Flail", bar: "front", key: "1", desc: "Lash targets to build 1st Crux, apply Abyssal Ink, and heal." },
+    { name: "Cephaliarch's Flail", bar: "front", key: "1", desc: "Lash again to build 2nd Crux and refresh ink." },
+    { name: "Cephaliarch's Flail", bar: "front", key: "1", desc: "Lash a 3rd time to reach maximum (3) Crux stacks." },
+    { name: "Pragmatic Fatecarver", bar: "front", key: "2", desc: "Channel the main beam. Consumes all 3 Crux for 100% damage shield and massive DPS." },
+    { name: "The Languid Eye", bar: "front", key: "Ult", desc: "Cast ultimate beam to melt high-priority targets with scaling damage." }
+  ]
+};
+
+let rotationStep = 0;
+let rotationPlaying = false;
+let rotationTimer = null;
+
 // ==========================================
 // APP STATE & STORAGE
 // ==========================================
@@ -1103,29 +1134,100 @@ function getSkillsHtml() {
     `;
   }).join('');
 
+  const links = activeClass === "nightblade" ? [
+    { label: "Skinny Cheeks Stamblade Guide", url: "https://www.skinnycheeks.gg/nightblade", icon: "🔥" },
+    { label: "AlcastHQ PvE DPS Guide", url: "https://alcasthq.com/eso-stamina-nightblade-build-for-pve/", icon: "⚔️" },
+    { label: "ESO-Hub Nightblade Builds", url: "https://eso-hub.com/en/builds/nightblade", icon: "📜" }
+  ] : [
+    { label: "Skinny Cheeks Arcanist Guide", url: "https://www.skinnycheeks.gg/arcanist", icon: "🔥" },
+    { label: "AlcastHQ Arcanist DPS Guide", url: "https://alcasthq.com/eso-arcanist-dps-build-pve/", icon: "⚡" },
+    { label: "ESO-Hub Arcanist Builds", url: "https://eso-hub.com/en/builds/arcanist", icon: "📜" }
+  ];
+
+  const linksHtml = links.map(link => `
+    <a href="${link.url}" target="_blank" rel="noreferrer" class="ext-link-btn">
+      <span>${link.icon}</span> ${link.label}
+    </a>
+  `).join('');
+
+  const rotation = ROTATION_SEQUENCES[activeClass];
+  const stepCards = rotation.map((step, idx) => {
+    const isActive = idx === rotationStep;
+    const isPast = idx < rotationStep;
+    
+    // Find skill line for icon building
+    let line = "Fighters Guild";
+    if (step.bar === "front") {
+      const match = SKILL_BARS.frontBar.skills.find(s => s.name === step.name);
+      if (match) line = match.line;
+    } else {
+      const match = SKILL_BARS.backBar.skills.find(s => s.name === step.name);
+      if (match) line = match.line;
+    }
+    
+    const iconUrl = buildSkillIconUrl(line, step.name);
+    
+    return `
+      <div class="rotation-step-card ${isActive ? 'active' : ''} ${isPast ? 'past' : ''}" data-step-idx="${idx}">
+        <span class="step-num">${idx + 1}</span>
+        <div class="step-icon-placeholder" style="width:36px; height:36px; border-radius:4px; border: 1px solid var(--gold-border); background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          ${step.name === 'Weapon Swap' 
+            ? `<span style="font-size: 1.1rem;">🔄</span>` 
+            : `<img class="step-icon-img" src="${iconUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%; height:100%; object-fit:cover; border-radius:3px;" /><span style="display:none; font-size:1rem; align-items:center; justify-content:center; width:100%; height:100%;">⚔️</span>`
+          }
+        </div>
+        <span class="step-name-label">${step.name}</span>
+        <span class="step-key-badge bar-${step.bar}">Key ${step.key}</span>
+      </div>
+    `;
+  }).join('');
+
+  const activeStepInfo = rotation[rotationStep];
+  const trainerHtml = `
+    <!-- Rotation Trainer Widget -->
+    <div class="rotation-trainer-box" style="margin-top: 32px; border-top: 2px solid rgba(213, 184, 117, 0.15); padding-top: 24px;">
+      <div class="trainer-header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; flex-wrap:wrap; gap:10px;">
+        <h3 class="skill-bar-title" style="margin-bottom:0;">🎯 Dynamic Combat Rotation Trainer</h3>
+        <div class="rotation-control-panel" style="display:flex; gap:6px;">
+          <button id="btn-rot-prev" class="rot-ctrl-btn" ${rotationStep === 0 ? 'disabled' : ''}>⏮️ Prev</button>
+          <button id="btn-rot-play" class="rot-ctrl-btn play-btn" style="min-width: 95px;">${rotationPlaying ? '⏸️ Pause' : '▶️ Auto-Play'}</button>
+          <button id="btn-rot-next" class="rot-ctrl-btn" ${rotationStep === rotation.length - 1 ? 'disabled' : ''}>Next ⏭️</button>
+          <button id="btn-rot-reset" class="rot-ctrl-btn">🔄 Reset</button>
+        </div>
+      </div>
+      <p class="card-desc" style="margin-bottom: 20px;">Learn the optimal spell sequence. Use the playback controls to step through or auto-play the rotation.</p>
+      
+      <div class="rotation-steps-track">
+        ${stepCards}
+      </div>
+      
+      <div class="active-step-details" style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 6px; padding: 12px 16px; margin-top: 16px;">
+        <div style="font-size: 0.65rem; color: var(--gold-primary); font-weight: 700; letter-spacing: 1.5px; margin-bottom: 4px; text-transform: uppercase;">
+          ACTIVE STEP INFO (Key ${activeStepInfo.key} &bull; ${activeStepInfo.bar.toUpperCase()} BAR)
+        </div>
+        <h4 style="margin: 0 0 6px 0; color: var(--text-primary); font-family: 'Outfit', sans-serif; font-size: 1.05rem;">${activeStepInfo.name}</h4>
+        <p style="margin: 0; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; font-style: italic;">${activeStepInfo.desc}</p>
+      </div>
+    </div>
+  `;
+
   return `
     <div class="view-header">
-      <h2>⚔️ Stamina Nightblade DPS Skill Setup</h2>
+      <h2>⚔️ ${BUILD_DATA[activeClass].name} DPS Skill Setup</h2>
       <p class="view-desc">Click any skill block below to open its detailed database entry on ESO-Hub. Hover to inspect tooltips.</p>
     </div>
     
     <!-- Top-Tier Build Reference Links -->
     <div class="external-links-panel">
-      <h4 class="links-panel-title">🏆 Top-Tier Stamina Nightblade Build References</h4>
+      <h4 class="links-panel-title">🏆 Top-Tier ${BUILD_DATA[activeClass].name} Build References</h4>
       <div class="links-row">
-        <a href="https://www.skinnycheeks.gg/nightblade" target="_blank" rel="noreferrer" class="ext-link-btn">
-          <span>🔥</span> Skinny Cheeks Stamblade Guide
-        </a>
-        <a href="https://alcasthq.com/eso-stamina-nightblade-build-for-pve/" target="_blank" rel="noreferrer" class="ext-link-btn">
-          <span>⚔️</span> AlcastHQ PvE DPS Guide
-        </a>
-        <a href="https://eso-hub.com/en/builds/nightblade" target="_blank" rel="noreferrer" class="ext-link-btn">
-          <span>📜</span> ESO-Hub Nightblade Builds
-        </a>
+        ${linksHtml}
       </div>
     </div>
 
     ${barsHtml}
+
+    ${trainerHtml}
   `;
 }
 
@@ -1227,6 +1329,37 @@ function getSlotSvg(slotId) {
 let DEFAULT_CHARACTER_EQUIPMENT = JSON.parse(JSON.stringify(CHARACTER_EQUIPMENT));
 let selectedSetName = null;
 
+function switchRotationStep(stepIdx) {
+  rotationStep = stepIdx;
+  renderView();
+}
+
+function playRotation() {
+  if (rotationPlaying) return;
+  rotationPlaying = true;
+  
+  rotationTimer = setInterval(() => {
+    const rotation = ROTATION_SEQUENCES[activeClass];
+    if (rotationStep < rotation.length - 1) {
+      rotationStep++;
+      renderView();
+    } else {
+      rotationStep = 0;
+      renderView();
+    }
+  }, 1500); // 1.5 seconds per step so the user can easily read details
+  
+  renderView();
+}
+
+function pauseRotation() {
+  if (!rotationPlaying) return;
+  rotationPlaying = false;
+  clearInterval(rotationTimer);
+  rotationTimer = null;
+  renderView();
+}
+
 function switchClass(classId) {
   activeClass = classId;
   localStorage.setItem("eso_active_class", classId);
@@ -1239,6 +1372,10 @@ function switchClass(classId) {
   
   DEFAULT_CHARACTER_EQUIPMENT = JSON.parse(JSON.stringify(CHARACTER_EQUIPMENT));
   selectedSetName = null;
+  
+  // Reset rotation state
+  pauseRotation();
+  rotationStep = 0;
   
   // Set dropdown to match state (for initial load / back button)
   const dropdown = document.getElementById("class-select");
@@ -1609,6 +1746,51 @@ function renderView() {
   } else if (activeTab === "skills") {
     container.innerHTML = getSkillsHtml();
     initTooltipEvents();
+
+    // Add Event Listeners for Rotation steps and controls
+    container.querySelectorAll(".rotation-step-card").forEach(card => {
+      card.addEventListener("click", (e) => {
+        const stepIdx = parseInt(e.currentTarget.getAttribute("data-step-idx"));
+        pauseRotation(); // Stop auto-play on manual select
+        switchRotationStep(stepIdx);
+      });
+    });
+
+    const btnPrev = document.getElementById("btn-rot-prev");
+    if (btnPrev) {
+      btnPrev.addEventListener("click", () => {
+        pauseRotation();
+        if (rotationStep > 0) switchRotationStep(rotationStep - 1);
+      });
+    }
+
+    const btnPlay = document.getElementById("btn-rot-play");
+    if (btnPlay) {
+      btnPlay.addEventListener("click", () => {
+        if (rotationPlaying) {
+          pauseRotation();
+        } else {
+          playRotation();
+        }
+      });
+    }
+
+    const btnNext = document.getElementById("btn-rot-next");
+    if (btnNext) {
+      btnNext.addEventListener("click", () => {
+        pauseRotation();
+        const rotation = ROTATION_SEQUENCES[activeClass];
+        if (rotationStep < rotation.length - 1) switchRotationStep(rotationStep + 1);
+      });
+    }
+
+    const btnResetRot = document.getElementById("btn-rot-reset");
+    if (btnResetRot) {
+      btnResetRot.addEventListener("click", () => {
+        pauseRotation();
+        switchRotationStep(0);
+      });
+    }
   } else if (activeTab === "gear") {
     container.innerHTML = getGearHtml();
     initTooltipEvents();

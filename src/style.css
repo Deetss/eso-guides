@@ -1408,6 +1408,141 @@ h2 {
   color: var(--gold-primary);
 }
 
+.rotation-steps-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 16px 4px;
+  margin-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(213, 184, 117, 0.3) rgba(0, 0, 0, 0.2);
+}
+
+/* Custom scrollbars for WebKit browsers */
+.rotation-steps-track::-webkit-scrollbar {
+  height: 6px;
+}
+.rotation-steps-track::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+.rotation-steps-track::-webkit-scrollbar-thumb {
+  background: rgba(213, 184, 117, 0.3);
+  border-radius: 3px;
+}
+.rotation-steps-track::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
+}
+
+.rotation-step-card {
+  width: 110px;
+  flex-shrink: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 14px 8px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rotation-step-card:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(213, 184, 117, 0.3);
+}
+
+.rotation-step-card.active {
+  border-color: var(--gold-primary);
+  background-color: rgba(213, 184, 117, 0.05);
+  box-shadow: 0 0 12px rgba(213, 184, 117, 0.25);
+  transform: translateY(-2px);
+}
+
+.rotation-step-card.past {
+  opacity: 0.45;
+}
+
+.rotation-step-card .step-num {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+}
+
+.rotation-step-card .step-name-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rotation-step-card .step-key-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-family: 'Outfit', sans-serif;
+}
+
+.rotation-step-card .step-key-badge.bar-front {
+  background-color: rgba(74, 222, 128, 0.08);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.rotation-step-card .step-key-badge.bar-back {
+  background-color: rgba(96, 165, 250, 0.08);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.rot-ctrl-btn {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--gold-border);
+  color: var(--gold-primary);
+  padding: 6px 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rot-ctrl-btn:hover:not(:disabled) {
+  background-color: rgba(213, 184, 117, 0.08);
+  border-color: var(--gold-primary);
+}
+
+.rot-ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.rot-ctrl-btn.play-btn {
+  background-color: rgba(213, 184, 117, 0.1);
+  border-color: var(--gold-primary);
+}
+
+.rot-ctrl-btn.play-btn:hover {
+  background-color: rgba(213, 184, 117, 0.15);
+}
+
 
 
 
